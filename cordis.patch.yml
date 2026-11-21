@@ -1,0 +1,4 @@
+# Host-only bundle: registers multimodal tools; no client bundle is needed.
+- insert:
+    - id: dsh-zhipu-multimodal
+      name: 'dsh-zhipu-multimodal'

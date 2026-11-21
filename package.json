@@ -1,0 +1,37 @@
+{
+  "name": "dsh-zhipu-multimodal",
+  "version": "0.4.0",
+  "private": true,
+  "description": "DSH tools for Zhipu GLM-Image, Vidu2, CogVideoX-3, CharGLM-4, plus a local Breeze-TTS-2 voice tool and sidebar page.",
+  "icon": "./assets/icon.png",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "assets",
+    "client.js",
+    "cordis.patch.yml",
+    "README.md",
+    "ISSUES.md"
+  ],
+  "scripts": {
+    "test": "node test/selfcheck.mjs",
+    "check": "node --check lib/index.js && node --check lib/tools.js && node --check lib/api.js && node --check lib/config.js && node --check lib/format.js && node --check lib/http.js && node --check lib/schema.js && node --check lib/breeze.js && node --check lib/breeze-route.js && node --check client.js"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web"
+    }
+  },
+  "engines": {
+    "node": "^22.19 || >=24"
+  }
+}
