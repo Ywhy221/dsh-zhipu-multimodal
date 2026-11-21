@@ -1,5 +1,7 @@
 # dsh-zhipu-multimodal
 
+[中文](README.md) | [English](README.en.md)
+
 DSH bundle：把智谱的 GLM-Image、Vidu2、CogVideoX-3、CharGLM-4 注册成工具，并把本机部署的 **Breeze-TTS-2** 接成一个工具和侧边栏「语音」页。所有网络/进程失败都会收敛成模型可读的结果，不会让插件加载失败。
 
 ## 工具与模型
@@ -29,6 +31,24 @@ v0.3.0 起不再注册 `generate_voice`（GLM-4-Voice → GLM-TTS）：
 - **GLM-4-Voice 不是纯 TTS**，而是语音对话模型，官方示例要求 `input_audio` 音频输入；纯文本请求实测被 `HTTP 400` 拒绝，当前插件没有麦克风/音频输入链路，保留它等于保留一个不可用工具。
 - **GLM-TTS 与 Breeze 能力重叠**，都是文字转语音；本机 Breeze 已可用、无需 API 费用、支持音色设计，而 GLM-TTS 当前账户返回 `HTTP 429 余额不足`。
 - 如果以后要接“语音对话”而不是“文字转语音”，应单独做音频输入 + 多轮会话，不应混在 TTS 工具里。
+
+## 扩展：接入其他模型
+
+插件没有把模型写死在注册器里：所有工具都在 `lib/tools.js` 用 `defineTool` 声明，网络调用集中在 `lib/api.js`，注册只发生在 `lib/index.js`。新增一个模型通常按以下 5 步：
+
+1. **在 `lib/api.js` 加模型函数**
+   - 用常量定义 model ID；用 `requestJson` 发请求；
+   - 本地校验 prompt 长度、枚举、图片数量、URL 协议；错误抛 `ZhipuError` 或返回可读失败；
+   - 异步模型加 `createXxxTask` + `generateXxx`，轮询统一复用 `pollAsync`，成功结果尽量归一化成现有 `image/video/text` 结构。
+2. **在 `lib/tools.js` 加 `defineTool`**
+   - 填 `name`、`description`、`parameters`、`output.schema`、`execute`；
+   - 输出优先复用 `resultOk`/`resultFail`；图片用 `markdownImage` 生成 `markdown_image`，异步返回 `task_id`/`status`；
+   - `description` 必须写清输出类型、是否异步，以及 `markdown_image` 要原样粘贴进回复正文。
+3. **在 `lib/index.js` 的 `tools` 数组注册**，循环会自动 `ctx.tools.register`。
+4. **在 `test/selfcheck.mjs` 加 mock fetch 测试**：成功、4xx、超时、非法输入；跑 `npm run check` 和 `node test/selfcheck.mjs`。
+5. **安装验证**：`plugin_manager remove_bundle` + `install_bundle`，刷新 GUI，确认 Host schema。改 description/parameters 后必须重装，不能只等 HMR。
+
+如果模型是本地服务或非智谱接口：单独建 adapter（参考 `lib/breeze.js`），把 base URL、密钥、路径做成环境变量；失败只影响该工具，`apply()` 不能抛错。需要 UI 时再加 `client.js` 的 slot（参考 `sidebar.panellist` + `main`），Host 路由通过 `ctx.inject(['webServer'])` 注册。
 
 ## 一句话调用 Breeze
 
